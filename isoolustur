@@ -110,4 +110,4 @@ echo '    initrd /live/initrd.img' >> isowork/boot/grub/grub.cfg
 echo '}' >> isowork/boot/grub/grub.cfg
 echo "${yesil}</> ${kirmizi}İso oluşturuluyor.. ${yesil}</> ${turkuaz}"
 grub-mkrescue isowork -o customdebian-live.iso
-echo "${yesil}</> ${kirmizi}Sorun Var ise: mcalik558@gmail.com${yesil}</> ${turkuaz}"
+echo "${yesil}</> ${kirmizi}Sorun Var ise: bayramk@gmail.com${yesil}</> ${turkuaz}"
