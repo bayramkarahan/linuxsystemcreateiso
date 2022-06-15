@@ -1,0 +1,113 @@
+#!/bin/bash
+
+############################################# 
+# Bayram KARAHAN tarafından yapılmıştır.      #
+# Eposta : bayramk@gmail.com         #
+#############################################
+
+#  Bu script GNU Lesser General Public License v3.0 ile lisanslanmıştır.
+
+# https://sulincix.gitlab.io/sayfalar/html/debian-iso-yapimi.html adresinden uyarlanmıştır.
+#https://kod.pardus.org.tr/caliktr/debian-iso-olustur/blob/master/isoolustur
+#https://www.cyberciti.biz/faq/linux-change-user-group-uid-gid-for-all-owned-files/
+
+gri=$'\e[1;30m';
+kirmizi=$'\e[1;31m';
+yesil=$'\e[1;32m';
+sari=$'\e[1;33m';
+mavi=$'\e[1;34m';
+mor=$'\e[1;35m';
+turkuaz=$'\e[1;36m';
+sifirla=$'\e[0m';
+kalin=$'\e[1m';
+
+if [[ "$(whoami)" != root ]]; then
+	echo "${kirmizi}İlk Önce Root Olmanız Gerekmekte.."
+	exit 0
+fi
+
+clear
+echo "${yesil}</> ${kirmizi}Bağlanmış dosyalar ayrılıyor.. ${yesil}</> ${turkuaz}"
+apt-get install debootstrap xorriso squashfs-tools mtools grub-pc-bin grub-efi-ia32-bin grub-efi -y
+
+wget http://sertifika.meb.gov.tr/MEB_SERTIFIKASI.cer -O /tmp/MEB_SERTIFIKASI.cer
+
+echo "${yesil}</> ${kirmizi}linux örneği oluşturma işlemi.. ${yesil}</> ${turkuaz}"
+mkdir sid-chroot
+chown root sid-chroot
+debootstrap --arch=amd64 --no-merged-usr stable sid-chroot https://deb.debian.org/debian
+#echo "APT::Sandbox::User root;" > sid-chroot/etc/apt/apt.conf.d/99sandboxroot
+cp /tmp/MEB_SERTIFIKASI.cer sid-chroot/tmp/MEB_SERTIFIKASI.cer
+
+bash -c 'for i in dev dev/pts proc sys; do mount -o bind /$i sid-chroot/$i; done'
+echo "${yesil}</> ${kirmizi}paket kurulum işlemi.. ${yesil}</> ${turkuaz}"
+#chroot sid-chroot /bin/bash
+sudo chroot sid-chroot echo 'deb https://deb.debian.org/debian stable main contrib non-free' > /etc/apt/sources.list
+
+sudo chroot sid-chroot openssl x509 -inform DER -in /tmp/MEB_SERTIFIKASI.cer -out /tmp/MEB_SERTIFIKASI.crt
+sudo chroot sid-chroot cp /tmp/MEB_SERTIFIKASI.crt /usr/local/share/ca-certificates/MEB_SERTIFIKASI.crt
+sudo chroot sid-chroot update-ca-certificates
+sudo chroot sid-chroot apt-get update
+echo "${yesil}</> ${kirmizi}kernel kuruluyor kuruluyor.. ${yesil}</> ${turkuaz}"
+sudo chroot sid-chroot apt-get install linux-headers-amd64 linux-image-amd64 -y
+
+echo "${yesil}</> ${kirmizi}grub-pc-bin kuruluyor.. ${yesil}</> ${turkuaz}"
+sudo chroot sid-chroot apt-get install grub-pc-bin -y
+
+echo "${yesil}</> ${kirmizi}grub-efi-ia32-bin kuruluyor.. ${yesil}</> ${turkuaz}"
+sudo chroot sid-chroot apt-get install grub-efi-ia32-bin -y
+
+echo "${yesil}</> ${kirmizi} grub-efi kuruluyor.. ${yesil}</> ${turkuaz}"
+sudo chroot sid-chroot apt-get install grub-efi -y
+
+echo "${yesil}</> ${kirmizi}live-config kuruluyor.. ${yesil}</> ${turkuaz}"
+sudo chroot sid-chroot apt-get install live-config -y
+
+echo "${yesil}</> ${kirmizi}live-boot kuruluyor.. ${yesil}</> ${turkuaz}"
+sudo chroot sid-chroot apt-get install live-boot -y
+
+echo "${yesil}</> ${kirmizi} xorg xinit kuruluyor.. ${yesil}</> ${turkuaz}"
+sudo chroot sid-chroot apt-get install xorg xinit -y
+
+echo "${yesil}</> ${kirmizi}lightdm kuruluyor.. ${yesil}</> ${turkuaz}"
+chroot sid-chroot apt-get install lightdm -y # giriş ekranı olarak lightdm yerine istediğinizi kurabilirsiniz.
+echo "${yesil}</> ${kirmizi}xfce4.. ${yesil}</> ${turkuaz}"
+sudo chroot sid-chroot apt-get install xfce4 -y
+
+echo "${yesil}</> ${kirmizi}thunar.. ${yesil}</> ${turkuaz}"
+sudo chroot sid-chroot apt-get install thunar -y
+
+echo "${yesil}</> ${kirmizi}network-manager-gnome gvfs-backends pavucontrol chromium vlc kuruluyor.. ${yesil}</> ${turkuaz}"
+sudo chroot sid-chroot apt-get install network-manager-gnome gvfs-backends pavucontrol chromium vlc -y
+
+echo "${yesil}</> ${kirmizi}root şifresi oluşturma.. ${yesil}</> ${turkuaz}"
+sudo chroot sid-chroot useradd admin -m
+#sudo chroot sid-chroot echo admin:admin|chpasswd
+echo -e "admin\nadmin\n" | sudo chroot sid-chroot passwd admin
+#exit
+echo "${yesil}</> ${kirmizi}bağlantı koparılıyor.. ${yesil}</> ${turkuaz}"
+sudo umount -lf -R sid-chroot/* 2>/dev/null
+echo "${yesil}</> ${kirmizi}Temizleme işlemi.. ${yesil}</> ${turkuaz}"
+sudo chroot sid-chroot apt-get autoremove # boşta kalan paketleri temizler
+sudo chroot sid-chroot apt-get clean # apt önbelleğini temizler
+sudo rm -f sid-chroot/root/.bash_history # iso yaparken oluşturduğunuz historyleri temizler
+sudo rm -rf sid-chroot/var/lib/apt/lists/* # index dosyalarını temizler
+sudo find sid-chroot/var/log/ -type f | xargs rm -f # logları siler
+
+echo "${yesil}</> ${kirmizi}Paketleme aşaması.. ${yesil}</> ${turkuaz}"
+mkdir isowork
+mksquashfs sid-chroot filesystem.squashfs -comp gzip -wildcards
+mkdir -p isowork/live
+sudo mv filesystem.squashfs isowork/live/filesystem.squashfs
+echo "${yesil}</> ${kirmizi}vmlinuz ve initrd dosyalarını isowork/live içerisine atalım. ${yesil}</> ${turkuaz}"
+sudo cp -pf sid-chroot/boot/initrd.img-* isowork/live/initrd.img
+sudo cp -pf sid-chroot/boot/vmlinuz-* isowork/live/vmlinuz
+echo "${yesil}</> ${kirmizi}grub.cfg dosyası oluşturalım. ${yesil}</> ${turkuaz}"
+sudo mkdir -p isowork/boot/grub/
+echo 'menuentry "Start customdebian 64-bit" --class debian {' > isowork/boot/grub/grub.cfg
+echo '    linux /live/vmlinuz boot=live live-config live-media-path=/live --' >> isowork/boot/grub/grub.cfg
+echo '    initrd /live/initrd.img' >> isowork/boot/grub/grub.cfg
+echo '}' >> isowork/boot/grub/grub.cfg
+echo "${yesil}</> ${kirmizi}İso oluşturuluyor.. ${yesil}</> ${turkuaz}"
+grub-mkrescue isowork -o customdebian-live.iso
+echo "${yesil}</> ${kirmizi}Sorun Var ise: mcalik558@gmail.com${yesil}</> ${turkuaz}"
