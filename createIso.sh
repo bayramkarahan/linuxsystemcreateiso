@@ -31,8 +31,8 @@ mkdir chroot  # || true
 
 
 ##### For debian
-debootstrap --arch=amd64 --no-merged-usr stable chroot https://deb.debian.org/debian
-echo 'deb https://deb.debian.org/debian stable main contrib non-free' > chroot/etc/apt/sources.list
+debootstrap --arch=amd64 --no-merged-usr sid chroot https://deb.debian.org/debian
+echo 'deb https://deb.debian.org/debian sid main contrib non-free' > chroot/etc/apt/sources.list
 
 #### Set root password
 pass="live"
@@ -44,7 +44,17 @@ echo "APT::Sandbox::User root;" > chroot/etc/apt/apt.conf.d/99sandboxroot
 for i in dev dev/pts proc sys; do mount -o bind /$i chroot/$i; done
 chroot chroot apt-get install gnupg -y
 
+
+
+git clone https://gitlab.com/ggggggggggggggggg/17g
+cd 17g
+mk-build-deps --install
+debuild -us -uc -b
+cd ..
+
+cp 17g-installer_1.0_all.deb chroot/tmp
 cp installer chroot/usr/bin/installer
+cp installergui chroot/usr/bin/installergui
 
 #### grub packages
 #chroot chroot apt-get dist-upgrade -y
@@ -66,7 +76,7 @@ ln -s bash chroot/bin/sh
 
 #### Remove bloat files after dpkg invoke (optional)
 cat > chroot/etc/apt/apt.conf.d/02antibloat << EOF
-DPkg::Post-Invoke {"rm -rf /usr/share/locale || true";};
+#DPkg::Post-Invoke {"rm -rf /usr/share/locale || true";};
 DPkg::Post-Invoke {"rm -rf /usr/share/man || true";};
 DPkg::Post-Invoke {"rm -rf /usr/share/help || true";};
 DPkg::Post-Invoke {"rm -rf /usr/share/doc || true";};
@@ -79,7 +89,7 @@ curl https://liquorix.net/liquorix-keyring.gpg | chroot chroot apt-key add -
 echo "deb http://liquorix.net/debian testing main" > chroot/etc/apt/sources.list.d/liquorix.list
 chroot chroot apt-get update -y
 chroot chroot apt-get install linux-image-liquorix-amd64 -y
-#chroot chroot apt-get install linux-headers-liquorix-amd64 -y
+chroot chroot apt-get install linux-headers-liquorix-amd64 -y
 
 #### stock kernel 
 #chroot chroot apt-get install linux-image-amd64 -y
@@ -97,6 +107,14 @@ chroot chroot apt-get install bluez-firmware firmware-amd-graphics firmware-athe
       firmware-misc-nonfree firmware-myricom firmware-netxen firmware-qlogic \
       firmware-ralink firmware-realtek firmware-samsung firmware-siano \
       firmware-ti-connectivity firmware-zd1211 zd1211-firmware -y
+
+chroot chroot dpkg -i /tmp/17g-installer_1.0_all.deb # dosya adını uygun şekilde yazınız.
+chroot chroot apt --fix-broken install -y
+chroot chroot apt-get install -f -y # eksik bağımlılıkları tamamlaması için.
+
+#cp config.yaml chroot/lib/live-installer/configs/config.yaml
+#cp config_fullscreen.yaml chroot/lib/live-installer/configs/config_fullscreen.yaml
+
 
 chroot chroot apt-get install network-manager-gnome gvfs-backends pavucontrol chromium vlc -y
 chroot chroot apt-get install zip unzip sudo -y
@@ -158,7 +176,7 @@ rm -rf chroot/var/lib/apt/lists/*
 find chroot/var/log/ -type f | xargs rm -f
 
 #### Create squashfs
-mkdir -p debjaro/boot || true
+mkdir -p liveiso/boot || true
 for dir in dev dev/pts proc sys ; do
     while umount -lf -R chroot/$dir 2>/dev/null ; do true; done
 done
@@ -167,25 +185,30 @@ mksquashfs chroot filesystem.squashfs -comp gzip -wildcards
 # For better compress ratio
 ##mksquashfs chroot filesystem.squashfs -comp xz -wildcards
 
-mkdir -p debjaro/live || true
-#ln -s live debjaro/casper || true #for ubuntu 
-mv filesystem.squashfs debjaro/live/filesystem.squashfs
+mkdir -p liveiso/live || true
+#ln -s live liveiso/casper || true #for ubuntu 
+mv filesystem.squashfs liveiso/live/filesystem.squashfs
 
 #### Copy kernel and initramfs (Debian/Devuan)
-cp -pf chroot/boot/initrd.img-* debjaro/boot/initrd.img
-cp -pf chroot/boot/vmlinuz-* debjaro/boot/vmlinuz
+cp -pf chroot/boot/initrd.img-* liveiso/boot/initrd.img
+cp -pf chroot/boot/vmlinuz-* liveiso/boot/vmlinuz
 
 #### Write grub.cfg
-mkdir -p debjaro/boot/grub/
-echo 'menuentry "Live GNU/Linux 64-bit" --class debjaro {' > debjaro/boot/grub/grub.cfg
-echo '    linux /boot/vmlinuz boot=live quiet live-config --' >> debjaro/boot/grub/grub.cfg
-echo '    initrd /boot/initrd.img' >> debjaro/boot/grub/grub.cfg
-echo '}' >> debjaro/boot/grub/grub.cfg
+mkdir -p liveiso/boot/grub/
+echo 'menuentry "Live GNU/Linux 64-bit" --class liveiso {' > liveiso/boot/grub/grub.cfg
+echo '    linux /boot/vmlinuz boot=live quiet live-config --' >> liveiso/boot/grub/grub.cfg
+echo '    initrd /boot/initrd.img' >> liveiso/boot/grub/grub.cfg
+echo '}' >> liveiso/boot/grub/grub.cfg
 
-echo 'menuentry "Installer GNU/Linux 64-bit" --class debjaro {' >> debjaro/boot/grub/grub.cfg
-echo '    linux /boot/vmlinuz boot=live quiet init=/usr/bin/installer --' >> debjaro/boot/grub/grub.cfg
-echo '    initrd /boot/initrd.img' >> debjaro/boot/grub/grub.cfg
-echo '}' >> debjaro/boot/grub/grub.cfg
+echo 'menuentry "Installer GNU/Linux 64-bit" --class liveiso {' >> liveiso/boot/grub/grub.cfg
+echo '    linux /boot/vmlinuz boot=live quiet init=/usr/bin/installer --' >> liveiso/boot/grub/grub.cfg
+echo '    initrd /boot/initrd.img' >> liveiso/boot/grub/grub.cfg
+echo '}' >> liveiso/boot/grub/grub.cfg
+
+echo 'menuentry "Installer Graphic Screen GNU/Linux 64-bit" --class liveiso {' >> liveiso/boot/grub/grub.cfg
+echo '    linux /boot/vmlinuz boot=live quiet init=/usr/bin/installergui --' >> liveiso/boot/grub/grub.cfg
+echo '    initrd /boot/initrd.img' >> liveiso/boot/grub/grub.cfg
+echo '}' >> liveiso/boot/grub/grub.cfg
 
 #### Create iso
-grub-mkrescue debjaro -o debjaro-gnulinux-$(date +%s).iso
+grub-mkrescue liveiso -o liveiso-gnulinux-$(date +%s).iso

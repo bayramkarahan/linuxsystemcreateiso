@@ -1,0 +1,31 @@
+#!/bin/bash
+export PATH=/usr/bin:/usr/sbin:/bin:/sbin
+msg(){
+    echo -e "\033[32;1m$1\033[;0m"
+}
+
+if [[ $UID -eq 0 ]] ; then
+    mount -t devtmpfs devtmpfs /dev || true
+    mount -t proc proc /proc || true
+    mount -t sysfs sysfs /sys || true
+    mount -t efivarfs efivars /sys/firmware/efi/efivars || true
+fi
+mkdir -p /source /target || true
+mount /dev/loop0 /source || true
+
+fallback(){
+        echo -e "\033[31;1mInstallation failed.\033[;0m"
+        echo -e "Creating a shell for debuging. Good luck :D"
+        PS1="\[\033[32;1m\]>>>\[\033[;0m\]" /bin/bash --norc --noprofile
+        if [[ $$ -eq 0 ]] ; then
+            echo o > /proc/sysrq-trigger
+        else
+            exit 1
+        fi
+}
+
+if [[ "$debug" != "false" ]] ; then
+    PS1="\[\033[32;1m\]>>>\[\033[;0m\]" /bin/bash --norc --noprofile
+fi
+
+touch /source/bayramkarahan
