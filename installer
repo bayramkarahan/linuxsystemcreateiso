@@ -125,6 +125,10 @@ Option "XkbModel" "pc105"
 EndSection
 EOF
 chroot /target locale-gen
+
+#******hosts file localhost added
+bash -c "echo '122.1.1.0 pardus' >> /target/etc/hosts"
+
 # user setup
 for grp in cdrom floppy sudo audio dip video plugdev netdev bluetooth lpadmin scanner ; do
     chroot /target usermod -aG $grp $username || true
