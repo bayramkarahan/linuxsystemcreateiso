@@ -1,3 +1,4 @@
+#!/bin/bash
 #### liquorix kernel
 curl https://liquorix.net/liquorix-keyring.gpg | chroot chroot apt-key add -
 echo "deb http://liquorix.net/debian testing main" > chroot/etc/apt/sources.list.d/liquorix.list

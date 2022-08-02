@@ -1,12 +1,8 @@
 #!/bin/bash
 #### xorg & desktop pkgs
 
-chroot chroot apt-get install xorg xinit -y
+chroot chroot apt-get install xorg xserver-xorg xinit xserver-xorg-input-multitouch xserver-xorg-input-evdev dbus-x11 -y
 chroot chroot apt-get install lightdm -y # giriş ekranı olarak lightdm yerine istediğinizi kurabilirsiniz.
-chroot chroot apt-get install xfce4 xfce4-goodies -y
-
-  
-#chroot chroot apt-get install xorg xserver-xorg xinit -y
 
 #### Install lightdm (for lxde and xfce only)
 #chroot chroot apt-get install lightdm lightdm-gtk-greeter -y
@@ -18,14 +14,13 @@ chroot chroot apt-get install xfce4 xfce4-goodies -y
 #chroot chroot apt-get install lxde-core xdg-utils -y
 
 #### Install xfce
-#chroot chroot apt-get install xfce4 xfce4-goodies -y
+chroot chroot apt-get install xfce4 xfce4-goodies -y
 
 #### Install gnome
 #chroot chroot apt-get install gnome-core -y
 
 #### Install kde
-#chroot chroot apt-get install kde-plasma-desktop kwin-x11 -y
-
+#chroot chroot apt-get install kde-plasma-desktop kwin-x11 kscreen plasma-nm plasma-pa kwin-x11 plasma-desktop kate dolphin qml-module-org-kde-newstuff -y
 
 #### etap greeter install
 chroot chroot apt --fix-broken install -y

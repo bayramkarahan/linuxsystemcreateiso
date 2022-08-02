@@ -3,6 +3,8 @@
 source ./1_init.sh
 #################### createsystem
 source ./2_createsystem.sh
+#################### meb sertifikası
+source ./3_0_sertifika.sh
 #################### kernel install
 source ./3_kernel.sh
 #################### firmware install

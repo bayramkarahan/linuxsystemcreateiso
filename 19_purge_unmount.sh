@@ -10,6 +10,8 @@ chroot chroot apt autoremove -y
 chroot chroot apt-get clean
 rm -f chroot/root/.bash_history
 rm -rf chroot/var/lib/apt/lists/*
+rm -rf chroot/tmp/*
+
 find chroot/var/log/ -type f | xargs rm -f
 
 #### umount
