@@ -7,7 +7,8 @@ if which apt &>/dev/null && [[ -d /var/lib/dpkg && -d /etc/apt ]] ; then
 #    # For 17g package build
 #    apt-get install git devscripts equivs -y
 fi
-
+#### For 17g package build
+apt-get install git devscripts equivs -y
 #set -ex
 #### Chroot create
 mkdir chroot  # || true

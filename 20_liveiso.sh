@@ -28,7 +28,7 @@ echo '    initrd /boot/initrd.img' >> liveiso/boot/grub/grub.cfg
 echo '}' >> liveiso/boot/grub/grub.cfg
 
 echo 'menuentry "Installer Graphic Screen GNU/Linux 64-bit" --class liveiso {' >> liveiso/boot/grub/grub.cfg
-echo '    linux /boot/vmlinuz boot=live quiet init=/usr/bin/installergui --' >> liveiso/boot/grub/grub.cfg
+echo '    linux /boot/vmlinuz boot=live username=liveinstall quiet --' >> liveiso/boot/grub/grub.cfg
 echo '    initrd /boot/initrd.img' >> liveiso/boot/grub/grub.cfg
 echo '}' >> liveiso/boot/grub/grub.cfg
 

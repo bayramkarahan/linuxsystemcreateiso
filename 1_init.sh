@@ -1,5 +1,6 @@
 #!/bin/bash
 #set -e
+set -x
 #### Check root
 if [[ ! $UID -eq 0 ]] ; then
     echo -e "\033[31;1mYou must be root!\033[:0m"
