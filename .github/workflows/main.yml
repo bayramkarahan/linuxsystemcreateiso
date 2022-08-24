@@ -22,7 +22,7 @@ jobs:
           sudo ./createIso.sh
           cd ..
           sudo mkdir -p /output
-          sudo mv *.iso /output/xfce-weekly.iso
+          sudo mv linuxsystemcreateiso/*.iso /output/xfce-weekly.iso
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
